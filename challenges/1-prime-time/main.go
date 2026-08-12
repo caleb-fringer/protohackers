@@ -55,8 +55,8 @@ func main() {
 }
 
 type Request struct {
-	Method string      `json:"method"`
-	Number json.Number `json:"number"`
+	Method string `json:"method"`
+	Number string `json:"number"`
 }
 
 type Response struct {
@@ -103,8 +103,8 @@ func truncate(f float64) float64 {
 	return float64(n)
 }
 
-func extractJsonInt(number json.Number) (int, error) {
-	f, err := json.Number.Float64(number)
+func extractJsonInt(number string) (int, error) {
+	f, err := strconv.ParseFloat(number, 64)
 	if err != nil {
 		return 0, fmt.Errorf("%v (decoded as %v) is not an integer: %v\n", number, f, err)
 	}
