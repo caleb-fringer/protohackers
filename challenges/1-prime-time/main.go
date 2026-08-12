@@ -55,13 +55,13 @@ func main() {
 }
 
 type Request struct {
-	Method string
-	Number json.Number
+	Method string      `json:"method"`
+	Number json.Number `json:"number"`
 }
 
 type Response struct {
-	Method string
-	Prime  bool
+	Method string `json:"method"`
+	Prime  bool   `json:"prime"`
 }
 
 func handleConnection(conn net.Conn, sieve sieve.Sieve) {
