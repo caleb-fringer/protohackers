@@ -1,5 +1,7 @@
 package sieve
 
+import "math"
+
 func NewSieve(n int) []bool {
 	sieve := make([]bool, n)
 
@@ -7,7 +9,8 @@ func NewSieve(n int) []bool {
 		sieve[i] = true
 	}
 
-	for i := 2; i < n; {
+	root_n := int(math.Sqrt(float64(n)))
+	for i := 2; i <= root_n; {
 		for j := i; i*j < n; j++ {
 			sieve[i*j] = false
 		}
