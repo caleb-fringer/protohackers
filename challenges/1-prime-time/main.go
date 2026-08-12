@@ -4,23 +4,38 @@ import (
 	"bufio"
 	"encoding/json"
 	"fmt"
+	"log"
 	"math"
 	"net"
 	"os"
+	"strconv"
 	"time"
 
 	"github.com/caleb-fringer/protohackers/internal/sieve"
 )
 
-const PORT = 443
+const DEFAULT_PORT = 8080
 
 func main() {
-	server, err := net.Listen("tcp", fmt.Sprintf(":%v", PORT))
+	var port int
+	var err error
+	if len(os.Args) < 2 {
+		fmt.Printf("No port number provided. Defaulting to %v...\n", DEFAULT_PORT)
+		port = DEFAULT_PORT
+	} else {
+		port, err = strconv.Atoi(os.Args[1])
+		if err != nil {
+			fmt.Printf("Error parsing port number: %v\n", err)
+			os.Exit(1)
+		}
+	}
+
+	server, err := net.Listen("tcp", fmt.Sprintf(":%v", port))
 	if err != nil {
 		fmt.Printf("Error starting server: %v\n", err)
 		os.Exit(1)
 	}
-	fmt.Printf("Server started on port %v...\n", PORT)
+	fmt.Printf("Server started on port %v...\n", port)
 
 	fmt.Printf("Generating sieve from 1 to %v...\n", math.MaxInt32)
 	start_time := time.Now()
@@ -56,6 +71,7 @@ func handleConnection(conn net.Conn, sieve sieve.Sieve) {
 
 	for scanner.Scan() {
 		bytes := scanner.Bytes()
+		log.Printf("INFO: Received request:\n\t%s\n", bytes)
 		err := json.Unmarshal(bytes, &req)
 		if err != nil {
 			encoder.Encode(Response{
