@@ -71,9 +71,9 @@ func handleConnection(conn net.Conn, sieve sieve.Sieve) {
 
 	for scanner.Scan() {
 		bytes := scanner.Bytes()
-		log.Printf("INFO: Received request:\n\t%s\n", bytes)
+		log.Printf("INFO: Received request:\n%s\n", bytes)
 		err := json.Unmarshal(bytes, &req)
-		if err != nil {
+		if err != nil || req.Method != "isPrime" {
 			encoder.Encode(Response{
 				Method: "MalformedResponse",
 				Prime:  false,
@@ -85,14 +85,12 @@ func handleConnection(conn net.Conn, sieve sieve.Sieve) {
 		var isPrime bool
 		switch v := req.Number.(type) {
 		case string:
-			f, err := strconv.ParseFloat(v, 64)
-			if err != nil {
-				isPrime = false
-			} else if floatIsInt(f) {
-				isPrime = sieve.IsPrime(int(f))
-			} else {
-				isPrime = false
-			}
+			encoder.Encode(Response{
+				Method: "MalformedResponse",
+				Prime:  false,
+			})
+			conn.Close()
+			return
 		case int:
 			isPrime = sieve.IsPrime(v)
 		case float64:
