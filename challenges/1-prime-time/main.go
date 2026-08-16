@@ -56,7 +56,7 @@ func main() {
 
 type Request struct {
 	Method string `json:"method"`
-	Number string `json:"number"`
+	Number any    `json:"number"`
 }
 
 type Response struct {
@@ -83,12 +83,24 @@ func handleConnection(conn net.Conn, sieve sieve.Sieve) {
 		}
 
 		var isPrime bool
-		requestedInt, err := extractJsonInt(req.Number)
-
-		if err != nil {
-			isPrime = false
-		} else {
-			isPrime = sieve.IsPrime(requestedInt)
+		switch v := req.Number.(type) {
+		case string:
+			f, err := strconv.ParseFloat(v, 64)
+			if err != nil {
+				isPrime = false
+			} else if floatIsInt(f) {
+				isPrime = sieve.IsPrime(int(f))
+			} else {
+				isPrime = false
+			}
+		case int:
+			isPrime = sieve.IsPrime(v)
+		case float64:
+			if floatIsInt(v) {
+				isPrime = sieve.IsPrime(int(v))
+			} else {
+				isPrime = false
+			}
 		}
 
 		encoder.Encode(Response{
@@ -103,16 +115,6 @@ func truncate(f float64) float64 {
 	return float64(n)
 }
 
-func extractJsonInt(number string) (int, error) {
-	f, err := strconv.ParseFloat(number, 64)
-	if err != nil {
-		return 0, fmt.Errorf("%v (decoded as %v) is not an integer: %v\n", number, f, err)
-	}
-
-	if truncate(f) != f {
-		return 0, fmt.Errorf("%v (decoded as %v) is not an integer: %v\n", number, f, err)
-	}
-
-	n := int(f)
-	return n, nil
+func floatIsInt(f float64) bool {
+	return f == truncate(f)
 }
