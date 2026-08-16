@@ -101,6 +101,13 @@ func handleConnection(conn net.Conn, sieve sieve.Sieve) {
 			} else {
 				isPrime = false
 			}
+		default:
+			encoder.Encode(Response{
+				Method: "MalformedResponse",
+				Prime:  false,
+			})
+			conn.Close()
+			return
 		}
 
 		encoder.Encode(Response{
