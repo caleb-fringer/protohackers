@@ -1,7 +1,7 @@
 (ns clojure-sltns.tcp-server
   (:import [java.net ServerSocket
             SocketException]
-           [java.util.concurrent Executors]))
+           [java.util.concurrent ThreadPoolExecutor Executors TimeUnit ArrayBlockingQueue RejectedExecutionException]))
 
 (defn echo-handler
   [in out]
@@ -17,27 +17,38 @@
           out (.getOutputStream client)]
       (handler in out))))
 
-(defn start-server
-  "Create and return a ServerSocket on the given port."
-  [port]
-  (ServerSocket. port))
-
 (defn serve
-  "Continuously accept incoming connections, dispatching them to a Future"
+  "Continuously accept incoming connections, dispatching them to the `workers` ThreadPool"
   [server workers handler]
   (try
     (loop []
       (let [client (.accept server)]
-        (.submit workers #(handle-client client handler))
+        (try
+          (.submit workers #(handle-client client handler))
+          (catch RejectedExecutionException _
+            (println "ThreadPool full, rejecting and closing connection")
+            (.close client)))
         (recur)))
     (catch SocketException e
       (if (.isClosed server)
         (println "Server closed normally.")
         (throw e)))))
 
-(def server (start-server 8080))
-(def workers (Executors/newFixedThreadPool 10))
-(def server-loop
-  (future (serve server workers echo-handler)))
+(defn start-server
+  "Create & start the server w/ the given port, handler func, capacity, and keepalive time. Returns a function to stop the server and cleanup the thread pool."
+  [port handler capacity keepalive]
+  (let [server (ServerSocket. port)
+        workers (ThreadPoolExecutor.
+                 capacity
+                 capacity
+                 keepalive
+                 TimeUnit/MILLISECONDS
+                 (ArrayBlockingQueue. capacity))]
+    (future (serve server workers handler))
+    (fn []
+      (.close server)
+      (.shutdown workers)
+      (.awaitTermination workers 10 TimeUnit/SECONDS))))
 
-;(.close server)
+(def stop-server (start-server 8080 echo-handler 10 500))
+;(stop-server)
