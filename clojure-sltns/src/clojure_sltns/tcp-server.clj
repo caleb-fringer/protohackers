@@ -1,7 +1,7 @@
 (ns clojure-sltns.tcp-server
   (:import [java.net ServerSocket
             SocketException]
-           [java.util.concurrent ThreadPoolExecutor Executors TimeUnit ArrayBlockingQueue RejectedExecutionException]))
+           [java.util.concurrent ThreadPoolExecutor TimeUnit ArrayBlockingQueue RejectedExecutionException]))
 
 (defn echo-handler
   [in out]
