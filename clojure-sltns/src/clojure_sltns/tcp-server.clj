@@ -5,6 +5,7 @@
 
 (defn echo-handler
   [in out]
+  (Thread/sleep 5000)
   (loop [read-byte (.read in)]
     (when (not= read-byte -1)
       (.write out read-byte)
@@ -31,7 +32,7 @@
         (recur)))
     (catch SocketException e
       (if (.isClosed server)
-        (println "Server closed normally.")
+        (println "Server closed, not accepting new connections.")
         (throw e)))))
 
 (defn start-server
@@ -48,7 +49,9 @@
     (fn []
       (.close server)
       (.shutdown workers)
-      (.awaitTermination workers 10 TimeUnit/SECONDS))))
+      (println "Waiting for existing connections to terminate...")
+      (.awaitTermination workers 10 TimeUnit/SECONDS)
+      (println "Done."))))
 
 (def stop-server (start-server 8080 echo-handler 10 500))
-;(stop-server)
+(stop-server)
