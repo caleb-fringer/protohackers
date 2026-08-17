@@ -1,7 +1,7 @@
 (ns clojure-sltns.tcp-server
-  (:import [java.io InputStream
-            OutputStream]
-           [java.net ServerSocket]))
+  (:import [java.net ServerSocket
+            SocketException]
+           [java.util.concurrent Executors]))
 
 (defn echo-handler
   [in out]
@@ -24,12 +24,20 @@
 
 (defn serve
   "Continuously accept incoming connections, dispatching them to a Future"
-  [server handler]
-  (loop []
-    (let [client (.accept server)]
-      (future (handle-client client handler))
-      (recur))))
+  [server workers handler]
+  (try
+    (loop []
+      (let [client (.accept server)]
+        (.submit workers #(handle-client client handler))
+        (recur)))
+    (catch SocketException e
+      (if (.isClosed server)
+        (println "Server closed normally.")
+        (throw e)))))
 
 (def server (start-server 8080))
-(serve server echo-handler)
-(.close server)
+(def workers (Executors/newFixedThreadPool 10))
+(def server-loop
+  (future (serve server workers echo-handler)))
+
+;(.close server)
