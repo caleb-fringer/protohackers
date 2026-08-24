@@ -1,7 +1,10 @@
 (ns clojure-sltns.tcp-server
-  (:import [java.net ServerSocket
-            SocketException]
-           [java.util.concurrent ThreadPoolExecutor TimeUnit ArrayBlockingQueue RejectedExecutionException]))
+  (:import [java.net ServerSocket SocketException]
+           [java.util.concurrent
+            ArrayBlockingQueue
+            RejectedExecutionException
+            ThreadPoolExecutor
+            TimeUnit]))
 
 (defn echo-handler
   [in out]
@@ -45,6 +48,7 @@
                  keepalive
                  TimeUnit/MILLISECONDS
                  (ArrayBlockingQueue. capacity))]
+    (printf "Starting server on port %d...\n" port)
     (future (serve server workers handler))
     (fn []
       (.close server)
@@ -52,6 +56,3 @@
       (println "Waiting for existing connections to terminate...")
       (.awaitTermination workers 10 TimeUnit/SECONDS)
       (println "Done."))))
-
-(def stop-server (start-server 8080 echo-handler 10 500))
-(stop-server)
