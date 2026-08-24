@@ -39,7 +39,7 @@
             (cond (= t \I) (recur (read-msg in buf) (assoc prices a b))
                   (= t \Q) (let
                             [requested-prices (subseq prices >= a <= b)]
-                             (.write out (.getBytes (format "%d\n" (get-avg requested-prices))))
+                             (.write out (get-avg requested-prices))
                              (recur (read-msg in buf) prices))
                   :else (.write out (.getBytes "Bad message type received!\n"))))
           nil))
