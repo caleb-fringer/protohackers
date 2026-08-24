@@ -6,4 +6,4 @@
 (defn -main
   "I don't do a whole lot ... yet."
   [& args]
-  (start-server 8080 connection-handler 10 500))
+  (start-server 443 connection-handler 10 500))

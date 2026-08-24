@@ -49,6 +49,7 @@
                  TimeUnit/MILLISECONDS
                  (ArrayBlockingQueue. capacity))]
     (printf "Starting server on port %d...\n" port)
+    (flush)
     (future (serve server workers handler))
     (fn []
       (.close server)

@@ -22,8 +22,13 @@
 
 (defn get-avg
   [coll]
-  (int (/ (apply + (map second coll))
-          (count coll))))
+  (if (empty? coll) (int 0)
+      (int (/ (apply + (map second coll))
+              (count coll)))))
+(defn write-int
+  [^OutputStream out i]
+  (doseq [j (reverse (map (fn [x] (* 8 x)) (range 4)))]
+    (.write out (bit-shift-right i j))))
 
 (defn connection-handler
   [^InputStream in
@@ -39,7 +44,7 @@
             (cond (= t \I) (recur (read-msg in buf) (assoc prices a b))
                   (= t \Q) (let
                             [requested-prices (subseq prices >= a <= b)]
-                             (.write out (get-avg requested-prices))
+                             (write-int out (get-avg requested-prices))
                              (recur (read-msg in buf) prices))
                   :else (.write out (.getBytes "Bad message type received!\n"))))
           nil))

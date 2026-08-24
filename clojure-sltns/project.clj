@@ -5,7 +5,8 @@
             :url "https://www.eclipse.org/legal/epl-2.0/"}
   :dependencies [[org.clojure/clojure "1.12.2"]
                  [org.clojure/core.async "1.9.808-alpha1"]]
-  :main ^:skip-aot clojure-sltns.core
+  :main clojure-sltns.core
+  :aot [clojure-sltns.core]
   :target-path "target/%s"
   :plugins [[cider/cider-nrepl "0.42.1"]]
   :profiles {:uberjar {:aot :all
