@@ -173,7 +173,7 @@ async def handle_connection(
         await broadcast(users, username, f"* {username} has left the room\n")
 
     
-async def main(address:str="127.0.0.1", port:int=8080) -> None:
+async def main(address:str="0.0.0.0", port:int=8080) -> None:
     users: ConnectedUsers = {}
     try:
         server = await asyncio.start_server(
