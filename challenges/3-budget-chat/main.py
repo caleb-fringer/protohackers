@@ -41,6 +41,7 @@ def get_peers(username: str, users: ConnectedUsers) -> list[str]:
 
 async def greet_user(
     users: ConnectedUsers,
+    user: str,
     reader: asyncio.StreamReader,
     writer: asyncio.StreamWriter
 ) -> None:
@@ -48,6 +49,7 @@ async def greet_user(
     Send a greeting to the newly connected user w/ a list of all the peers
     who are connected to the chat room.
     '''
+    peers = [peer for peer in users if peer != user]
     message = f"* The room contains: {", ".join(users)}\n"
     writer.write(message.encode(encoding="ascii"))
     await writer.drain()
@@ -100,12 +102,8 @@ async def handle_login(
         username = await request_username(reader, writer)
 
     print(f"{username} has connected.")
-
     # Add user to users group
     users[username] = writer
-    await greet_user(users, reader, writer)
-    # Announce membership change
-    await broadcast(users, username, f"* {username} has entered the room\n")
 
     return username
 
@@ -131,6 +129,7 @@ async def handle_connection(
     '''
     peername = writer.get_extra_info("peername")
     print(f"Connection received from {peername}")
+
     # Handle the whole login flow.
     try:
         username = await handle_login(users, reader, writer)
@@ -140,10 +139,18 @@ async def handle_connection(
     except Exception as e:
         print(f"An unexpected exception occured while logging in user: {e}")
         return
-
+    
     print(f"{username} has logged in!")
 
     try:
+        await asyncio.gather(
+            # Greet the user before modifying users map, 
+            # since it broadcasts to the entire user group
+            greet_user(users, username, reader, writer),
+            # Announce membership change
+            broadcast(users, username, f"* {username} has entered the room\n")
+        )
+        
         while True:
             data = await reader.readline()
             message = data.decode(encoding="ascii")
@@ -151,6 +158,7 @@ async def handle_connection(
                 break
             print(f"Received message from {username}")
             await broadcast(users, username, format_message(username, message))
+
     except ConnectionError:
         print(f"Peer at {peername} disconnected!")
         return
@@ -159,7 +167,8 @@ async def handle_connection(
         return
     finally:
         print(f"Disconnecting {username}")
-        del users[username]
+        users.pop(username, None)
+        await broadcast(users, username, f"* {username} has left the room\n")
 
     
 async def main(address:str="127.0.0.1", port:int=8080) -> None:
