@@ -132,7 +132,10 @@ async def handle_connection(
 
     # Handle the whole login flow.
     try:
-        username = await handle_login(users, reader, writer)
+        username = await asyncio.wait_for(
+            handle_login(users, reader, writer), 
+            10
+        )
     except ConnectionError:
         print(f"Peer at {peername} disconnected!")
         return
