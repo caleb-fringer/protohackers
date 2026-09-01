@@ -113,7 +113,8 @@ def format_message(sender: str, message: str) -> str:
 async def handle_connection(
         users: ConnectedUsers, 
         reader: asyncio.StreamReader, 
-        writer: asyncio.StreamWriter
+        writer: asyncio.StreamWriter,
+        timeout: int = 9,
 ) -> None:
     '''
     - Request username
@@ -134,13 +135,12 @@ async def handle_connection(
     try:
         username = await asyncio.wait_for(
             handle_login(users, reader, writer), 
-            10
+            timeout
         )
-    except ConnectionError:
+    except (ConnectionError, TimeoutError):
         print(f"Peer at {peername} disconnected!")
-        return
-    except Exception as e:
-        print(f"An unexpected exception occured while logging in user: {e}")
+        writer.close()
+        await writer.wait_closed()
         return
     
     print(f"{username} has logged in!")
