@@ -139,10 +139,11 @@ async def handle_connection(
         )
     except (ConnectionError, TimeoutError):
         print(f"Peer at {peername} disconnected!")
-        writer.close()
-        await writer.wait_closed()
+        if writer and writer.is_closing():
+            writer.close()
+            await writer.wait_closed()
         return
-    
+            
     print(f"{username} has logged in!")
 
     try:
@@ -167,14 +168,21 @@ async def handle_connection(
     except ConnectionError:
         print(f"Peer at {peername} disconnected!")
         return
+    except BrokenPipeError:
+        print(f"Broken pipe! {peername} disconnected!")
     except Exception as e:
         print(f"An unexpected exception occured: {e}")
+        writer.close()
+        await writer.wait_closed()
         return
     finally:
         print(f"Disconnecting {username}")
         users.pop(username, None)
         await broadcast(users, username, f"* {username} has left the room\n")
-
+        if writer and writer.is_closing():
+            writer.close()
+            await writer.wait_closed()
+        
     
 async def main(address:str="0.0.0.0", port:int=8080) -> None:
     users: ConnectedUsers = {}
