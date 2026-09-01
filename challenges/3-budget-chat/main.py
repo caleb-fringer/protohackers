@@ -50,7 +50,7 @@ async def greet_user(
     who are connected to the chat room.
     '''
     peers = [peer for peer in users if peer != user]
-    message = f"* The room contains: {", ".join(users)}\n"
+    message = f"* The room contains: {", ".join(peers)}\n"
     writer.write(message.encode(encoding="ascii"))
     await writer.drain()
 
