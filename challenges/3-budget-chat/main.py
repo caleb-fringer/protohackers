@@ -153,6 +153,8 @@ async def handle_connection(
         
         while True:
             data = await reader.readline()
+            if not data:
+                break
             message = data.decode(encoding="ascii")
             if message.strip() == "q":
                 break
