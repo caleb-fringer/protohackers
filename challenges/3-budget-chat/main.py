@@ -140,6 +140,8 @@ async def handle_connection(
     except (ConnectionError, TimeoutError):
         print(f"Peer at {peername} disconnected!")
         if writer and writer.is_closing():
+            # TODO: This (and probably the other `await writer.wait_closed()`)
+            # can experience a BrokenPipeError *while* trying to wait_closed.
             writer.close()
             await writer.wait_closed()
         return
